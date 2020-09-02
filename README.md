@@ -17,7 +17,7 @@ base64 -w 0 Test.class > Test.txt
 
 ### 自动编译
 
-在build.py中替换你的javac路径跟lib路径后，在当前目录下运行,即可对当前路径下所有.java文件进行编译以及生成base64格式的payload。
+在build.py中替换你的javac路径跟lib路径后，在当前目录下运行，即可对当前路径下所有.java文件进行编译以及生成base64格式的payload。
 
 ```
 python3 build.py
@@ -36,7 +36,7 @@ python3 build.py
         }
     }
 
-    public static byte[] base64Decode(String str) throws Exception {
+    public byte[] base64Decode(String str) throws Exception {
         try {
             Class clazz = Class.forName("sun.misc.BASE64Decoder");
             return (byte[]) clazz.getMethod("decodeBuffer", String.class).invoke(clazz.newInstance(), str);
@@ -61,7 +61,7 @@ python3 build.py
 
 ### v1.1
 
-1.  增加对Tomcat内存Webshell的兼容
+1. 增加对Tomcat内存Webshell的兼容
 2. 兼容高版本JDK（JDK7-14）
 
 ### v 1.0
